@@ -59,23 +59,6 @@ function kpiToTable(kpiObj) {
     return obj.hasOwnProperty(prop) ? obj[prop] : defaultValue;
   }
 
-  /*
-  Seems like I should be able to do this instead
-
-  var doc = DocumentApp.getActiveDocument();
-  var body = doc.getBody();
-
-  // Create a two-dimensional array to hold the initial content of the table
-  // Adjust the array size according to the desired number of rows and columns
-  var tableData = [
-    ['Row 1, Cell 1', 'Row 1, Cell 2'],
-    ['Row 2, Cell 1', 'Row 2, Cell 2']
-  ];
-
-  // Create a table in the document with the data
-  var table = body.insertTable(0, tableData);
-  */
-
   // Open the source document that contains the table
   var sourceDocumentId = templateId;
   var sourceDoc = DocumentApp.openById(sourceDocumentId);
@@ -128,44 +111,14 @@ function kpiToTable(kpiObj) {
   targetTable.setAttributes(sourceTable.getAttributes());
 }
 
-// this has to be much better and include the actual prompt
-function getPartialText(text) {
-  // Rough approximation of max characters, assuming average of 4 chars per token
-  const maxChars = maxTokens * 4;
-  let truncatedText = text.slice(0, maxChars);
-
-  // Further refine the truncation to ensure it ends with a full word.
-  // This will potentially reduce the character count further to avoid cutting off a word in the middle.
-  if (truncatedText[maxChars - 1] !== ' ' && text[maxChars] !== ' ' && text[maxChars] !== undefined) {
-    truncatedText = truncatedText.substring(0, Math.min(truncatedText.length, truncatedText.lastIndexOf(' ')));
-  }
-  console.log('truncated length: ' + truncatedText.length);
-  return truncatedText;
-}
-
 function extractKpi() {
   // TODO: need to break out long documents
   var docText = DocumentApp.getActiveDocument().getBody().getText();
-  docText = getPartialText(docText);
   var prompt = extractPrompt() + docText;
-
-  // var targetDoc = DocumentApp.getActiveDocument();
-  // var targetBody = targetDoc.getBody();
-  // targetBody.appendParagraph(prompt);
 
   var response = callGPT(prompt);
   let objectResponse = JSON.parse(response);
   kpiToTable(objectResponse);
-  // below deprecated due to native JSON response
-  // if (response) {
-  //   let regExp = /```json[\s\S]*?```/;
-  //   let match = response.match(regExp);
-  //   if (match) {
-  //     let parsedResponse = match[0].replace('```json', '').replace('```', '');
-  //     let objectResponse = JSON.parse(parsedResponse);
-  //     kpiToTable(objectResponse);
-  //   }
-  // }
 }
 
 function callGPT(prompt) {
@@ -196,13 +149,9 @@ function callGPT(prompt) {
   // Make the API request
   const response = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', params);
 
-  // Log the response from OpenAI
-  // console.log(response.getContentText());
-
   // Optional: Parse the response and do something with it, like inserting it back into the document
   const responseJson = JSON.parse(response.getContentText());
   if (responseJson.choices && responseJson.choices.length > 0) {
-    // console.log(responseJson.choices[0].message.content);
     return responseJson.choices[0].message.content;
   }
   return false;
@@ -210,10 +159,7 @@ function callGPT(prompt) {
 
 function onOpen() {
   const ui = DocumentApp.getUi();
-  // Or DocumentApp or FormApp.
   ui.createMenu('Custom Menu')
     .addItem('Extract KPIs', 'extractKpi')
-    //.addItem('Add Scorecard', 'copyTableToCurrentDocument')
-    //.addItem('kpiToTable', 'kpiToTable')
     .addToUi();
 }
