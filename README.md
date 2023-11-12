@@ -1,4 +1,4 @@
-# google-docs-gpt
+# google-docs-gpt-extractor
 gscript to enable LLM / GPT collaboration inside google docs
 
 ## Purpose
